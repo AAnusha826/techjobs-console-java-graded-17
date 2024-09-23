@@ -19,29 +19,26 @@ public class JobData {
     private static boolean isDataLoaded = false;
 
     private static ArrayList<HashMap<String, String>> allJobs;
-
-    /**
+        /**
      * Fetch list of all values from loaded data,
      * without duplicates, for a given column.
      *
      * @param field The column to retrieve values from
-     * @return List of all of the values of the given field
+     * @return List of all  the values of the given field
      */
     public static ArrayList<String> findAll(String field) {
 
         // load data, if not already loaded
         loadData();
-
         ArrayList<String> values = new ArrayList<>();
-
         for (HashMap<String, String> row : allJobs) {
             String aValue = row.get(field);
-
             if (!values.contains(aValue)) {
                 values.add(aValue);
             }
         }
-
+//sorting list results alphabetically
+        Collections.sort(values);
         return values;
     }
 
@@ -49,14 +46,12 @@ public class JobData {
 
         // load data, if not already loaded
         loadData();
-
-        return allJobs;
+        return (ArrayList<HashMap<String, String>>) allJobs.clone();
     }
 
     /**
      * Returns results of search the jobs data by key/value, using
      * inclusion of the search term.
-     *
      * For example, searching for employer "Enterprise" will include results
      * with "Enterprise Holdings, Inc".
      *
@@ -65,21 +60,18 @@ public class JobData {
      * @return List of all jobs matching the criteria
      */
     public static ArrayList<HashMap<String, String>> findByColumnAndValue(String column, String value) {
-
         // load data, if not already loaded
         loadData();
-
         ArrayList<HashMap<String, String>> jobs = new ArrayList<>();
+        String lowerCaseValue = value.toLowerCase();
 
         for (HashMap<String, String> row : allJobs) {
+            String fieldValue = row.get(column).toLowerCase();  // Make comparison case-insensitive
 
-            String aValue = row.get(column);
-
-            if (aValue.contains(value)) {
+            if (fieldValue.contains(lowerCaseValue)) {
                 jobs.add(row);
             }
         }
-
         return jobs;
     }
 
@@ -90,12 +82,25 @@ public class JobData {
      * @return      List of all jobs with at least one field containing the value
      */
     public static ArrayList<HashMap<String, String>> findByValue(String value) {
-
         // load data, if not already loaded
         loadData();
+        ArrayList<HashMap<String, String>> results = new ArrayList<>();
+        String lowerCaseValue = value.toLowerCase();
+
+        for (HashMap<String, String> job : allJobs) {
+            for (String key : job.keySet()) {
+                String fieldValue = job.get(key).toLowerCase();  // Case-insensitive search
+                if (fieldValue.contains(lowerCaseValue)) {
+                    if (!results.contains(job)) {
+                        results.add(job);
+                    }
+                    break;  // No need to check other fields if a match is found
+                }
+            }
+        }
 
         // TODO - implement this method
-        return null;
+        return results;
     }
 
     /**
@@ -114,7 +119,7 @@ public class JobData {
             Reader in = new FileReader(DATA_FILE);
             CSVParser parser = CSVFormat.RFC4180.withFirstRecordAsHeader().parse(in);
             List<CSVRecord> records = parser.getRecords();
-            Integer numberOfColumns = records.get(0).size();
+            int numberOfColumns = records.get(0).size();
             String[] headers = parser.getHeaderMap().keySet().toArray(new String[numberOfColumns]);
 
             allJobs = new ArrayList<>();
